@@ -1,0 +1,42 @@
+Unfortunately compiling this module is not straight forward. The
+following are some things to check if you have problems compiling
+or running.
+
+*PGPLOT PATCH*
+
+- Is perlTk installed? 
+
+- Is PTK_INCL set correctly in the appropriate .conf file?
+
+    The correct value should be found automatically by the .conf
+    file but it may make a mistake (such as using the wrong version
+    of perl). Try directly entering the value of PTK_INCL, or using
+    the simple one liner. Note that some Linux distributions don't
+    install Tk in the site_perl directory, so you will have to hunt
+    around for the pTk directory by hand.
+
+*Tk::Pgplot*
+
+- Is Makefile.PL configured correctly?
+  If $PGPLOT_DIR cannot be used to locate the pgplot directories and
+  include files you must set PGPLOT_INC_LOCATION and PGPLOT_LIB_LOCATION
+  in Makefile.PL
+
+- If Makefile.PL cannot find ptkpgplot.h check the value of 
+  PGPLOT_INC_LOCATION.
+
+- If Makefile.PL cannot find libptkpgplot.a check the value of 
+  PGPLOT_LIB_LOCATION.
+
+- Is Tk.pm installed? 
+  This module has been developed using Tk800.015. Some earlier versions
+  are known to not be compatible.
+
+- Is PGPLOT.pm installed? 
+   You also need ExtUtils::F77, which PGPLOT.pm also requires.
+
+- Is Makefile.PL really linking you with the correct version of Pgplot?
+  If you are using a private version of pgplot with the ptk patch, make
+  sure you really are linking with it. I had problems with on HP-UX when
+  a -L/usr/local/lib was inserted as the first of the ld options. 
+  (I only fixed this by editing the Makefile Makefile.PL produced).

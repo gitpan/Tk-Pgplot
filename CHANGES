@@ -1,0 +1,6 @@
+18-Jan-2000 0.001 Original Release
+05-Mar-2000 0.1   Minor bugfixes and inclusion of demo program
+                  Addition of -name option
+26-Mar-2000 0.12  Minor tweaks to Makefile.PL and .conf files
+		  Tested using HP-UX
+31-Mar-2000 0.013 Change to makemake detection of pTk include directorty

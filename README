@@ -1,0 +1,91 @@
+Tk::Pgplot
+==========
+
+**Beta version**
+
+Pgplot widget for Perl/Tk. This module is the perl front end to a port
+of the pgplot Tcl/Tk driver to Perl/Tk. It uses the same basic X code
+used by the Tcl/Tk and Motif drivers supplied with pgplot, and a
+modified version of the Tcl/Tk code. Due to this dependency of X code,
+it is unlikely to run on any OS that does not support X (ie Windows). 
+
+Requirements:
+-------------
+
+- An ansi C compiler
+- Standard X libraries
+- A *modified* version of pgplot 5.2.0
+- A Fortran 77 compiler (for pgplot)
+
+Platforms:
+----------
+ This has been tested with
+
+   - Linux
+	Redhat 6.0	egcs-1.1.2 perl-5.005_03 Tk800.015
+
+   - Solaris	
+	5.6		egcs-1.1.2 perl-5.005_02 Tk800.015
+	5.6		egcs-1.1.2 perl-5.6.0 Tk800.015
+
+   - HP-UX
+	10.20		gcc perl-5.005_02 Tk800.015
+		
+
+Installation:
+-------------
+
+ - You *must* supply a patch to pgplot to include the perl/tk driver
+   (see PGPLOT.patch).
+
+ - Edit Makefile.PL and change the location of the pgplot libraries if need be.
+   By default it assumes the pgplot libraries and includes are pointed to 
+   by the environment variable PGPLOT_DIR. 
+
+  > perl Makefile.PL
+  > make
+  > make test
+  > make install
+
+Dependencies:
+-------------
+ 
+ - The Caltech pgplot library
+ - The Perl PGPLOT Module (available from CPAN)
+ - The ExtUtils::F77 Module from CPAN (also needed by the Pgplot module)
+
+
+Author:
+-------
+ Please send comments and bug fixes to phillips@jive.nl
+ Chris Phillips, Joint Institute for VLBI in Europe
+
+Documentation:
+--------------
+
+Please see the driver documentation for options from the Tcl/Tk
+version. However there is one difference in usage. The Tcl version
+uses the Tcl name of the widget to identify the widget to pgopen. This
+does not map well to perl, so an extra configure option has been
+added, "name". The name given to the widget must be supplied to
+pgopen(). E.g.
+
+  my $mw = MainWidget();
+  my $pgplot = $mw->Pgplot(-name => 'mypgplot');
+  pgopen('mypgplot/ptk');
+
+The supported options should work identically. See the included test
+scripts for an example of usage.
+
+Bugs:
+-----
+
+- make test fails (for me) on HP-UX. However perl test.pl works fine.
+- the scroll bars don't work on the test program (but they do on the demo)
+
+Copyright
+---------
+
+This module is copyright (C) 2000 Chris Phillips.  All rights
+reserved.  This program is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself. 

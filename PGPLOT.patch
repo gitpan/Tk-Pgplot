@@ -1,0 +1,27 @@
+The directory pgplot.patch contains modified/additional files from the 
+pgplot 5.2.0 distribution:
+
+  drivers.list               Added ptk to device list
+  makemake                   Added ptk compile options
+  drivers/pkdriv.c	     Dummy pgplot/tk driver
+  drivers/ptk/ptkpgplot.c    Ported code from Tcl/Tk driver
+  drivers/ptk/ptkpgplot.h
+  sys_linux/...              Modified makedefs for Linux
+  sys_sol2/...               Modified makedefs for Solaris
+  sys_hp/...                 Modified makedefs for HP-UX
+
+The main change to the ".conf" files in the inclusion of the PTK_INCL
+definition. I have embedded a small perl script which should figure 
+out the correct value for this, but is is probably worth verifing the
+Makefile if you have compilation troubles. Set the value by hand if the
+correct value is not found.
+
+Currently this has been tested under Linux, Solaris and HP-UX. To get
+this to work for other OSes, copy the section from one of the included 
+.conf files the .conf file for your OS/compile combination.
+
+You must compile the C wrappers to pgplot to get it to work from
+perl. The Tcl/Tk code inserts a dummy driver into the normal libpgplot
+so that applications not using the perl/tk driver do not have to link
+with perl. When the perl/tk driver is wanted the dynamic linker should
+load the correct objects.
