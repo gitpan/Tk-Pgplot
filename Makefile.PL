@@ -3,7 +3,7 @@
 # Location of pgplot include files
 my $PGPLOT_INC_LOCATION = ""; # e.g. -I/usr/local/pgplot/include
 
-# Location of pgplot direcotries. Defaults to $PGPLOT_DIR
+# Location of pgplot directories. Defaults to $PGPLOT_DIR
 my $PGPLOT_LIB_LOCATION = ""; # e.g. -L/usr/local/pgplot/lib
 
 # Location of X11 libraries
@@ -16,7 +16,6 @@ my $X11_LIB_LOCATION = "-L/usr/openwin/lib -L/usr/X11R6/lib";
 use Tk::MMutil;
 
 use ExtUtils::F77;
-
 
 if ($PGPLOT_LIB_LOCATION eq "" && defined $ENV{PGPLOT_DIR}) {
   $PGPLOT_LIB_LOCATION =  "-L$ENV{PGPLOT_DIR}";

@@ -2,11 +2,39 @@
 
 use strict;
 
-BEGIN { unshift(@INC, "./blib/arch") ;unshift(@INC, "./blib/lib") }
+use blib;
 
 use Tk;
 use Tk::Pgplot;
 use PGPLOT;
+
+# Start by testing that we can find the ptk pgplot driver
+# If it is not present, something is wrong
+
+my ($ndrivers,$n,$type,$tlen,$descr,$dlen,$inter, $dummy);
+pgqndt($ndrivers);
+
+my $foundit=0;
+for $n (1..$ndrivers) {
+  pgqdt($n,$type,$dummy,$dummy,$dummy,$dummy);
+  if (uc($type) eq '/PTK') {
+    $foundit = 1;
+    last;
+  }
+}
+if (!$foundit) { # Not present in list of drivers
+warn<<EOF
+
+*** Could not find PTK pgplot driver ***
+
+This is probably caused by linking with the wrong version of pgplot 
+(try "ldd blib/arch/auto/Tk/Pgplot/Pgplot.so") or a compilation mismatch.
+Have you compiled pgperl since you patched pgplot? 
+
+EOF
+  ;
+exit 0;
+}
 
 sub Plotit() {
   my $img="";
@@ -59,33 +87,34 @@ sub Plotit() {
 my $mw = MainWindow->new;
 
 my $quit = $mw->Button(-text    => 'Quit',
-			-command => sub {exit;})->pack;
+		      -command => sub {exit;})->pack;
 
 my $plot = $mw->Button(-text    => 'Plot',
-		       -command => \&Plotit)->pack;
+		      -command => \&Plotit)->pack;
 
+my $w = $mw->Frame()->pack;
 # This is NOT a good choice of colours!
-my $pgplot = $mw->Pgplot(-name => 'pgtest',
-			 -width => '15c',
-			 -height => '15c',
-			 -bg => 'ivory',
-			 -fg => 'blue',
-			 -maxcolors => 64,
-			 -cursor => 'hand2',
-			 -relief => 'groove',
-			 -borderwidth => 5,
-			 -highlightbackground => 'red',
-			 -highlightcolor => 'green',
-			 -takefocus => 1
-			);
+my $pgplot = $w->Pgplot(-name => 'pgtest',
+			-width => '15c',
+			-height => '15c',
+			-bg => 'ivory',
+			-fg => 'blue',
+			-maxcolors => 64,
+			-cursor => 'hand2',
+			-relief => 'groove',
+			-borderwidth => 5,
+			-highlightbackground => 'red',
+			-highlightcolor => 'green',
+			-takefocus => 1
+		       );
 
 # Respond to key strokes
 $pgplot->bind('<KeyPress>' => [sub {print "Pressed $_[1]\n"}, Ev('A')]);
 
-# Add scroll bars. This does not seem to work
-my $xscroll = $mw->Scrollbar(-orient => 'horizontal',
+# Add scroll bars. This does not seem to work see the demo
+my $xscroll = $w->Scrollbar(-orient => 'horizontal',
 			     -command => ['xview', $pgplot]);
-my $yscroll = $mw->Scrollbar(-orient => 'vertical',
+my $yscroll = $w->Scrollbar(-orient => 'vertical',
 			     -command => ['yview', $pgplot]);
 
 

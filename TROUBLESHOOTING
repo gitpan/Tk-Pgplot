@@ -15,6 +15,15 @@ or running.
     install Tk in the site_perl directory, so you will have to hunt
     around for the pTk directory by hand.
 
+- If compiling on Linux you must compile pgplot using g77_gcc.conf 
+  NOT g77_aout.conf
+
+- If you are using Tk800.022, you need to define -DOLDTK in the .conf file
+
+- If you a compilation warning like 
+    ptkpgplot.c:613: warning: implicit declaration of function `LangWidgetObj'
+  then you are compiling for the wrong versipn of Tk. See PGPLOT.patch
+
 *Tk::Pgplot*
 
 - Is Makefile.PL configured correctly?
@@ -28,9 +37,12 @@ or running.
 - If Makefile.PL cannot find libptkpgplot.a check the value of 
   PGPLOT_LIB_LOCATION.
 
+- If "make test" fails with something like "undefined symbol: LangWidgetObj"
+  then you have compiled pgplot for the wrong Tk version. See PGPLOT.patch
+
 - Is Tk.pm installed? 
-  This module has been developed using Tk800.015. Some earlier versions
-  are known to not be compatible.
+  This module has been developed using Tk800.022. Some earlier versions
+  before 800.015 are known to not be compatible.
 
 - Is PGPLOT.pm installed? 
    You also need ExtUtils::F77, which PGPLOT.pm also requires.
@@ -39,4 +51,11 @@ or running.
   If you are using a private version of pgplot with the ptk patch, make
   sure you really are linking with it. I had problems with on HP-UX when
   a -L/usr/local/lib was inserted as the first of the ld options. 
-  (I only fixed this by editing the Makefile Makefile.PL produced).
+  (I only fixed this by editing the Makefile Makefile.PL produced). You can 
+   also do a check using something like:
+     > find . -name Pgplot.so -exec ldd \{} \;
+
+- Have you recompiled pgperl since you patch pgplot
+
+- Have you upgrated Tk since you compiled pgplot
+

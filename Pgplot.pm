@@ -7,7 +7,7 @@ Construct Tk::Widget 'Pgplot';
 
 
 use vars qw($VERSION);
-$VERSION = '0.2';
+$VERSION = '0.30';
 
 bootstrap Tk::Pgplot $Tk::VERSION;
 

@@ -2,7 +2,7 @@
 
 use strict;
 
-BEGIN { unshift(@INC, "./blib/arch") ;unshift(@INC, "./blib/lib") }
+use blib;
 
 use Tk;
 use Tk::Pgplot;
@@ -22,6 +22,46 @@ sub create_slice_area ($);
 sub create_save_dialog ($);
 sub create_help_dialog ($);
 sub create_world_labels ($);
+sub create_option_menu ($$);
+
+# Define some colour tables.
+
+# Define single-colour ramp functions.
+my $grey_l  = [0.0,1.0];
+my $grey_c  = [0.0,1.0];
+
+
+# Define a rainbow colour table.
+my $rain_l = [-0.5, 0.0, 0.17, 0.33, 0.50, 0.67, 0.83, 1.0, 1.7];
+my $rain_r = [ 0.0, 0.0,  0.0,  0.0,  0.6,  1.0,  1.0, 1.0, 1.0];
+my $rain_g = [ 0.0, 0.0,  0.0,  1.0,  1.0,  1.0,  0.6, 0.0, 1.0];
+my $rain_b = [ 0.0, 0.3,  0.8,  1.0,  0.3,  0.0,  0.0, 0.0, 1.0];
+
+
+# Iraf "heat" colour table.
+my $heat_l = [0.0, 0.2, 0.4, 0.6, 1.0];
+my $heat_r = [0.0, 0.5, 1.0, 1.0, 1.0];
+my $heat_g = [0.0, 0.0, 0.5, 1.0, 1.0];
+my $heat_b = [0.0, 0.0, 0.0, 0.3, 1.0];
+
+
+# AIPS tvfiddle discrete rainbow colour table.
+
+my $aips_l = [0.0, 0.1, 0.1, 0.2, 0.2, 0.3, 0.3, 0.4, 0.4, 0.5,
+	      0.5, 0.6, 0.6, 0.7, 0.7, 0.8, 0.8, 0.9, 0.9, 1.0];
+my $aips_r = [0.0, 0.0, 0.3, 0.3, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0,
+	      0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
+my $aips_g = [0.0, 0.0, 0.3, 0.3, 0.0, 0.0, 0.0, 0.0, 0.8, 0.8,
+	      0.6, 0.6, 1.0, 1.0, 1.0, 1.0, 0.8, 0.8, 0.0, 0.0];
+my $aips_b = [0.0, 0.0, 0.3, 0.3, 0.7, 0.7, 0.7, 0.7, 0.9, 0.9,
+	      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+
+# List the supported colour tables.
+my %cmap = ("grey",    [$grey_l, $grey_c, $grey_c, $grey_c, scalar(@$grey_l)],
+	    "rainbow", [$rain_l, $rain_r, $rain_g, $rain_b, scalar(@$rain_l)],
+	    "heat",    [$heat_l, $heat_r, $heat_g, $heat_b, scalar(@$heat_l)],
+	    "aips",    [$aips_l, $aips_r, $aips_g, $aips_b, scalar(@$aips_l)],
+	    );
 
 my $mw = MainWindow->new(-title => 'Pgptkdemo');
 $mw->iconname("Pgtkdemo");
@@ -32,7 +72,7 @@ $mw->configure(-cursor => 'top_left_arrow');
 $mw->optionAdd('*font' => '-Adobe-Times-Medium-R-Normal-*-140-*',
 	       'widgetDefault');
 
-# Set default widget colors.
+# Set default widget colours.
 
 my $bg = '#bfe5ff';
 my $alt_bg = '#00ddff';
@@ -67,8 +107,7 @@ my ($slicearea, $pgslice) = create_slice_area($mw);
 my %demodata = initialize_demo();
 
 # Create the function-selection option menu.
-my $function_menu;
-my $function = create_option_menu($mw);
+my $function = create_option_menu($mw, $pgimage);
 
 # Create dialogs for later display.
 
@@ -179,8 +218,10 @@ sub create_image_area ($) {
 
   # Create the PGPLOT image window.
   my $pgplot = $w->Pgplot(-name => 'image',
+			  -share => 1,
 			  -width => '10c',
 			  -height => '10c',
+			  -mincolors => 25,
 			  -maxcolors => 64,
 			  -bd => 2,
 			  -bg => 'black',
@@ -337,38 +378,56 @@ sub display_image ($) {
   $tr[3] = (YA - 1) * SCALE;
   $tr[4] = 0.0;
   $tr[5] = SCALE;
-  pggray($demodata{image}, IMAGE_SIZE, IMAGE_SIZE, 1, IMAGE_SIZE, 
-	 1, IMAGE_SIZE, $demodata{datamax}, $demodata{datamin}, \@tr);
+
+  if ($demodata{monochrome}) {
+    pggray($demodata{image}, IMAGE_SIZE, IMAGE_SIZE, 1, IMAGE_SIZE,
+	   1, IMAGE_SIZE, $demodata{datamax}, $demodata{datamin}, \@tr);
+  } else {
+    pgimag($demodata{image}, IMAGE_SIZE, IMAGE_SIZE, 1, IMAGE_SIZE, 1, 
+	   IMAGE_SIZE, $demodata{datamin}, $demodata{datamax}, \@tr);
+  }
+  pgsci(1);
+ 
   pgbox("BCNST", 0.0, 0, "BCNST", 0.0, 0);
   pglab("X", "Y", "Image display demo");
 }
 
 # Create a labelled option menu.
-sub create_option_menu  {
-
+sub create_option_menu ($$) {
   my $mw = shift;
+  my $pgimage = shift;
 
   # Create a frame to enclose the menu.
   my $w = $mw->Frame();
+  my $w1 = $w->Frame()->pack(-side => 'top', -fill => 'x');
+  my $w2 = $w->Frame()->pack(-side => 'top', -fill => 'x');
 
   # Create the option-menu label.
-  my $label = $w->Label(-text => 'Select a display function:');
+  my $dlabel = $w1->Label(-text => 'Select a display function:');
 
   # Create the option menu.
-  my $menutext;
-  my $menu = $w->Optionmenu(-command => [\&draw_image, $mw],
-			    -variable => \$function_menu,
-			    -textvariable => \$menutext);
-  $menu->addOptions(['cos(R)sin(A)' => 0],
-		    ['sinc(R)' => 1],
-		    ['exp(-R^2/20.0)' => 2],
-		    ['sin(A)' => 3],
-		    ['cos(R)' => 4],
-		    ['(1+sin(6A))exp(-R^2/100)' => 5]);
+  my ($menutext, $function_menu);
+  my $dmenu = $w1->Optionmenu(-command => [\&draw_image, $mw],
+			      -variable => \$function_menu,
+			      -textvariable => \$menutext);
+  $dmenu->addOptions(['cos(R)sin(A)' => 0],
+		     ['sinc(R)' => 1],
+		     ['exp(-R^2/20.0)' => 2],
+		     ['sin(A)' => 3],
+		     ['cos(R)' => 4],
+		     ['(1+sin(6A))exp(-R^2/100)' => 5]);
+
+  # Create the colormap-selection option menu and label
+  my $clabel = $w2->Label(-text => 'Select a color table:');
+  my $cmenu = $w2->Optionmenu(-command => [\&recolour_image, $mw, $pgimage, \$function_menu]);
+  $cmenu->addOptions(qw(grey rainbow heat aips));
 
   # Place the label to the left of the menu button.
-  $label->pack(-side => 'left');
-  $menu->pack(-side => 'left');
+  $dlabel->pack(-side => 'left');
+  $dmenu->pack(-side => 'left');
+
+  $clabel->pack(-side => 'left');
+  $cmenu->pack(-side => 'left');
 
   return $w;
 }
@@ -382,6 +441,35 @@ sub redraw_slice {
   }
 }
 
+# Implement the demo "recolour_image" command. This takes one of a set of
+# supported colour-table names and redisplays the current image with the
+# specified colour table.
+#
+#    "aips"    -  AIPS tvfiddle colour table.
+#    "grey"    -  A grey-scale colour table.
+#    "heat"    -  The IRAF "heat" colour table.
+#    "rainbow" -  A red colour table.
+sub recolour_image {
+  my $mw = shift; # Main window
+  my $pgimage = shift;  # The pgplot widget
+  my $fn = shift; # Current displayed function
+  my $name = shift;  # The name of the desired colour table
+
+  # If the colour table is found, install it
+  if (exists($cmap{$name})) {
+    pgslct($demodata{image_id});
+    pgctab(@{$cmap{$name}}, 1.0, 0.5);
+  } else {
+    warn "Unknown colour map name $name\n";
+    return;
+  }
+
+  # Redraw the current image if necessary.
+  if ($pgimage->cget(-share)) {
+    draw_image($mw, $$fn);
+  }
+}
+
 # Create the area that contains the slice PGPLOT window.
 sub create_slice_area ($) {
   my $mw = shift;
@@ -391,12 +479,13 @@ sub create_slice_area ($) {
 
   # Create the PGPLOT slice window.
   my $pgplot = $w->Pgplot(-name => 'slice',
+			  -share => 1,
 			  -width => '10c',
-			 -height => '5c',
-			 -maxcolors => 16,
-			 -bd => 2,
-			 -bg => 'black',
-			 -fg => 'white');
+			  -height => '5c',
+			  -maxcolors => 2,
+			  -bd => 2,
+			  -bg => 'black',
+			  -fg => 'white');
 
   # Position the PGPLOT widget.
   $pgplot->pack(-side => 'left',
@@ -404,7 +493,7 @@ sub create_slice_area ($) {
 		-expand => 1);
 
   # Arrange for the plot to be redrawn whenever the widget is resized.
-  $pgplot->bind('<Configure>' =>  \&redraw_slice);
+  $pgplot->bind('<Configure>' => \&redraw_slice);
 
   return ($w, $pgplot);
 }
@@ -420,6 +509,7 @@ sub initialize_demo {
   $demo{datamin} = undef;
   $demo{datamax} = undef;
   $demo{have_slice} = 0;
+  $demo{monochrome} = 0;
 
   # Attempt to open the image and slice widgets.
   (($demo{image_id} = pgopen('image/ptk')) >= 0) ||
@@ -439,6 +529,14 @@ sub initialize_demo {
   for (my $i=0; $i<SLICE_SIZE; $i++) {
     $demo{slice}[$i] = 0.0;
   }
+
+  # If there are fewer than 2 colours available for plotting images,
+  # mark the image as monochrome so that pggray can be asked to
+  # produce a stipple version of the image.
+  pgslct($demo{image_id});
+  my ($minind, $maxind);
+  pgqcir($minind, $maxind);
+  $demo{monochrome} = $maxind-$minind+1 <= 2;
 
   return %demo;
 };

@@ -128,7 +128,7 @@ sub patchdir ($@) {
 	if ($debug) {
 	  print "mkdir $pgplotdir/$newdir\n";
 	} else {
-	  mkdir "$pgplotdir/$newdir"
+	  mkdir "$pgplotdir/$newdir", 0777
 	    || die "Failed to create $pgplotdir/$newdir";
 	}
       }
