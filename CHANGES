@@ -3,4 +3,6 @@
                   Addition of -name option
 26-Mar-2000 0.12  Minor tweaks to Makefile.PL and .conf files
 		  Tested using HP-UX
-31-Mar-2000 0.013 Change to makemake detection of pTk include directorty
+31-Mar-2000 0.13  Change to makemake detection of pTk include directory
+27-Apr-2001 0.2   Include simple script to apply pgplot patches
+		  Minor fixes to demo.pl

@@ -10,11 +10,19 @@ pgplot 5.2.0 distribution:
   sys_sol2/...               Modified makedefs for Solaris
   sys_hp/...                 Modified makedefs for HP-UX
 
+The script patchit.pl (alpha quality) will copy *and overwrite* the
+patched files into a clean pgplot source directory. Please let me know
+if you have problems with this. The script runs from the Tk::Pgplot
+directory and takes a single argument, the pgplot source directory.
+it tries to check it wont do anything terrible and renames existing
+files with a .orig suffix.
+
+
 The main change to the ".conf" files in the inclusion of the PTK_INCL
-definition. I have embedded a small perl script which should figure 
-out the correct value for this, but is is probably worth verifing the
-Makefile if you have compilation troubles. Set the value by hand if the
-correct value is not found.
+definition. I have embedded a small perl script which should figure
+out the correct value for this, but is is probably worth verifying the
+Makefile if you have compilation troubles. Set the value by hand if
+the correct value is not found.
 
 Currently this has been tested under Linux, Solaris and HP-UX. To get
 this to work for other OSes, copy the section from one of the included 

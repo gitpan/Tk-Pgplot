@@ -4,7 +4,6 @@ use strict;
 
 BEGIN { unshift(@INC, "./blib/arch") ;unshift(@INC, "./blib/lib") }
 
-#use POSIX qw(atan2);
 use Tk;
 use Tk::Pgplot;
 use PGPLOT;
@@ -16,6 +15,13 @@ use constant XB => int  IMAGE_SIZE/2;
 use constant YA => int -(IMAGE_SIZE)/2;
 use constant YB => int  IMAGE_SIZE/2;
 use constant SCALE => 40/IMAGE_SIZE;
+
+sub create_main_menubar ($);
+sub create_image_area ($);
+sub create_slice_area ($);
+sub create_save_dialog ($);
+sub create_help_dialog ($);
+sub create_world_labels ($);
 
 my $mw = MainWindow->new(-title => 'Pgptkdemo');
 $mw->iconname("Pgtkdemo");
@@ -54,13 +60,15 @@ my ($world, $xworld, $yworld) = create_world_labels($mw);
 # This is the image window.
 my ($imagearea, $pgimage) = create_image_area($mw);
 
-# Create the function-selection option menu.
-my $function_menu;
-my $function = create_option_menu($mw);
-
 # Create a PGPLOT window, and enclose it in a frame.
 # This is the slice window.
 my ($slicearea, $pgslice) = create_slice_area($mw);
+
+my %demodata = initialize_demo();
+
+# Create the function-selection option menu.
+my $function_menu;
+my $function = create_option_menu($mw);
 
 # Create dialogs for later display.
 
@@ -73,8 +81,6 @@ $world->pack(-side => 'top',  -anchor => 'w');
 $imagearea->pack(-side => 'top', -fill => 'both', -expand => 1);
 $function->pack(side => 'top',  -fill => 'x');
 $slicearea->pack(-side => 'top', -fill => 'both', -expand => 1);
-
-my %demodata = initialize_demo();
 
 # Windows in Tk do not take on their final sizes until the whole
 # application has been mapped. This makes it impossible for the
@@ -349,15 +355,16 @@ sub create_option_menu  {
   my $label = $w->Label(-text => 'Select a display function:');
 
   # Create the option menu.
-  my $cmdlist = [['cos(R)sin(A)' => 0],
-		 ['sinc(R)' => 1],
-		 ['exp(-R^2/20.0)' => 2],
-		 ['sin(A)' => 3],
-		 ['cos(R)' => 4],
-		 ['(1+sin(6A))exp(-R^2/100)' => 5]];
-  my $menu = $w->Optionmenu(-options => $cmdlist,
-			    -command => [\&draw_image, $mw],
-			    -variable => \$function_menu);
+  my $menutext;
+  my $menu = $w->Optionmenu(-command => [\&draw_image, $mw],
+			    -variable => \$function_menu,
+			    -textvariable => \$menutext);
+  $menu->addOptions(['cos(R)sin(A)' => 0],
+		    ['sinc(R)' => 1],
+		    ['exp(-R^2/20.0)' => 2],
+		    ['sin(A)' => 3],
+		    ['cos(R)' => 4],
+		    ['(1+sin(6A))exp(-R^2/100)' => 5]);
 
   # Place the label to the left of the menu button.
   $label->pack(-side => 'left');

@@ -9,6 +9,7 @@ test.pl
 demo.pl
 test.img
 PGPLOT.patch
+patchit.pl
 pgplot.patch/drivers/ptk/ptkpgplot.c
 pgplot.patch/drivers/ptk/ptkpgplot.h
 pgplot.patch/drivers/pkdriv.c
