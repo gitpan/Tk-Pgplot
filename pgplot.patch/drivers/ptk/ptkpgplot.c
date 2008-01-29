@@ -155,7 +155,7 @@ struct TkPgplot {
 };
 
 static TkPgplot *new_TkPgplot(Tcl_Interp *interp, Tk_Window main_w, char *name,
-			      int argc, Arg *args);
+			      int objc, Tcl_Obj *CONST objv[]);
 static TkPgplot *del_TkPgplot(TkPgplot *tkpg);
 
 
@@ -271,15 +271,15 @@ static void tkpg_update_clip(TkPgplot *tkpg);
 static void tkpg_update_border(TkPgplot *tkpg);
 
 //static int PgplotCmd(ClientData context, Tcl_Interp *interp, int argc,
-//		     Arg *args);
+//		     Tcl_Obj *CONST objv[]);
 
 static int tkpg_InstanceCommand(ClientData context, Tcl_Interp *interp,
-				int argc, Arg *args);
+				int objc, Tcl_Obj *CONST objv[]);
 
 static int tkpg_InstanceCommand_return(ClientData context, int iret);
 
 static int tkpg_Configure(TkPgplot *tkpg, Tcl_Interp *interp,
-			  int argc, Arg *args, int flags);
+			  int objc, Tcl_Obj *CONST objv[], int flags);
 static void tkpg_expose_handler(TkPgplot *tkpg, XEvent *event);
 static void tkpg_draw_focus_highlight(TkPgplot *tkpg);
 static void tkpg_draw_3d_border(TkPgplot *tkpg);
@@ -311,22 +311,22 @@ static int tkpg_SetCursor(TkPgplot *tkpg, TkpgCursorMode mode,
 static void tkpg_FreeProc(char *context);
 
 static int tkpg_scrollbar_callback(TkPgplot *tkpg, Tcl_Interp *interp, 
-				   char *widget, char *view, int argc,
-				   Arg *args);
+				   char *widget, char *view, int objc,
+				   Tcl_Obj *CONST objv[]);
 static int tkpg_scrollbar_error(TkPgplot *tkpg, Tcl_Interp *interp, 
-				char *widget, char *view, int argc,
-				Arg *args);
+				char *widget, char *view, int objc,
+				Tcl_Obj *CONST objv[]);
 
 static int tkpg_tcl_setcursor(TkPgplot *tkpg, Tcl_Interp *interp,
-			      int argc, Arg *args);
+			      int objc, Tcl_Obj *CONST objv[]);
 static int tkpg_tcl_world(TkPgplot *tkpg, Tcl_Interp *interp, 
-			  char *widget, int argc, Arg *args);
+			  char *widget, int objc, Tcl_Obj *CONST objv[]);
 static int tkpg_tcl_pixel(TkPgplot *tkpg, Tcl_Interp *interp, 
-			  char *widget, int argc, Arg *args);
+			  char *widget, int objc, Tcl_Obj *CONST objv[]);
 static int tkpg_tcl_id(TkPgplot *tkpg, Tcl_Interp *interp, 
-		       char *widget, int argc, Arg *args);
+		       char *widget, int objc, Tcl_Obj *CONST objv[]);
 static int tkpg_tcl_device(TkPgplot *tkpg, Tcl_Interp *interp, 
-			   char *widget, int argc, Arg *args);
+			   char *widget, int objc, Tcl_Obj *CONST objv[]);
 
 /*
  * The following file-scope container records the list of active and
@@ -363,19 +363,19 @@ static struct {
  *                          TkPgplot_Init() when PgplotCmd was registered.
  *                          This is the main window cast to (ClientData).
  *  interp    Tcl_Interp *  The TCL intrepreter.
- *  argc             int    The number of command arguments.
- *  argv            char ** The array of 'argc' command arguments.
- *                          argv[0] = "pgplot"
- *                          argv[1] = the name to give the new widget.
- *                          argv[2..argc-1] = attribute settings.
+ *  objc             int    The number of command arguments.
+ *  objv            char ** The array of 'objc' command arguments.
+ *                          objv[0] = "pgplot"
+ *                          objv[1] = the name to give the new widget.
+ *                          objv[2..objc-1] = attribute settings.
  * Output:
  *  return           int    TCL_OK    - Success.
  *                          TCL_ERROR - Failure.
  */
-int PgplotCmd(ClientData context, Tcl_Interp *interp, int argc,
-	      Arg *args)
+int PgplotCmd(ClientData context, Tcl_Interp *interp, int objc,
+	      Tcl_Obj *CONST objv[])
 {
-  Tk_Window main_tkw = (Tk_Window)context; /* The application main window */
+  Tk_Window main_tkw = Tk_MainWindow(interp); /* The application main window */
   TkPgplot *tkpg;                          /* The new widget instance object */
 
   SAY("PgplotCmd\n");
@@ -386,24 +386,24 @@ int PgplotCmd(ClientData context, Tcl_Interp *interp, int argc,
 
 #ifdef DODEBUG
   {int i;
-  printf(" Args(%d):\n", argc);
-  for (i=0; i<argc; i++) 
-    printf("  %d %p %s\n", i, args[i], LangString(args[i]));
+  printf(" Args(%d):\n", objc);
+  for (i=0; i<objc; i++) 
+    printf("  %d %p %s\n", i, objv[i], Tcl_GetString(objv[i]));
   //printf("   %d\n", i);
   }
 #endif
 
-  if(argc < 2) {
+  if(objc < 2) {
     SAY(" Wrong args\n");
-    Tcl_AppendResult(interp, "Wrong number of arguments - should be \'",
-		     LangString(args[0]), " pathName \?options\?\'", NULL);
+    Tcl_WrongNumArgs(interp, 1,
+		     objv, " pathName ?options?");
     return TCL_ERROR;
   };
 /*
  * Allocate the widget-instance object.
  */
 
-  tkpg = new_TkPgplot(interp, main_tkw, LangString(args[1]), argc-2, args+2);
+  tkpg = new_TkPgplot(interp, main_tkw, Tcl_GetString(objv[1]), objc-2, objv+2);
   if(!tkpg)
     return TCL_ERROR;
   return TCL_OK;
@@ -416,8 +416,8 @@ int PgplotCmd(ClientData context, Tcl_Interp *interp, int argc,
  *  interp   Tcl_Interp *  The TCL interpreter object.
  *  main_w    Tk_Window    The main window of the application.
  *  name           char *  The name to give the new widget.
- *  argc            int    The number of argument in argv[]
- *  argv           char ** Any configuration arguments.
+ *  objc            int    The number of argument in objv[]
+ *  objv           char ** Any configuration arguments.
  * Output:
  *  return     TkPgplot *  The new PGPLOT widget, or NULL on error.
  *                         If NULL is returned then the context of the
@@ -425,7 +425,7 @@ int PgplotCmd(ClientData context, Tcl_Interp *interp, int argc,
  *                         field of the interpreter.
  */
 static TkPgplot *new_TkPgplot(Tcl_Interp *interp, Tk_Window main_w, char *name,
-			      int argc, Arg *args)
+			      int objc, Tcl_Obj *CONST objv[])
 {
   TkPgplot *tkpg;  /* The new widget object */
   PgxWin *pgx;     /* The PGPLOT X window object of the widget */
@@ -537,7 +537,7 @@ static TkPgplot *new_TkPgplot(Tcl_Interp *interp, Tk_Window main_w, char *name,
  * Parse command line defaults into tkpg so that tkpg->min_colors,
  * tkpg->max_colors and tkpg->share are known.
  */
-  if(Tk_ConfigureWidget(interp, tkpg->tkwin, configSpecs, argc, args,
+  if(Tk_ConfigureWidget(interp, tkpg->tkwin, configSpecs, objc, objv,
 			(char *) tkpg, 0) == TCL_ERROR)
     return del_TkPgplot(tkpg);
 /*
@@ -586,7 +586,7 @@ static TkPgplot *new_TkPgplot(Tcl_Interp *interp, Tk_Window main_w, char *name,
  * Parse the command-line arguments again and install the relevant
  * defaults into the color descriptor created by pgx_window_visual().
  */
-  if(tkpg_Configure(tkpg, interp, argc, args, 0))
+  if(tkpg_Configure(tkpg, interp, objc, objv, 0))
     return del_TkPgplot(tkpg);
 /*
  * If the widget has scroll-bars make sure that they agree with the
@@ -1403,14 +1403,14 @@ void DRIV(ifunc, rbuf, nbuf, chr, lchr, len)
  * Input:
  *  context   ClientData    The tkpg widget cast to (ClientData).
  *  interp    Tcl_Interp *  The TCL intrepreter.
- *  argc             int    The number of command arguments.
- *  argv            char ** The array of 'argc' command arguments.
+ *  objc             int    The number of command arguments.
+ *  objv            char ** The array of 'objc' command arguments.
  * Output:
  *  return           int    TCL_OK    - Success.
  *                          TCL_ERROR - Failure.
  */
 static int tkpg_InstanceCommand(ClientData context, Tcl_Interp *interp,
-			       int argc, Arg *args)
+			       int objc, Tcl_Obj *CONST objv[])
 {
   TkPgplot *tkpg = (TkPgplot *) context;
   char *widget;     /* The name of the widget */
@@ -1421,16 +1421,16 @@ static int tkpg_InstanceCommand(ClientData context, Tcl_Interp *interp,
 /*
  * Get the name of the widget.
  */
-  widget = LangString(args[0]);
+  widget = Tcl_GetString(objv[0]);
 /*
  * Get the name of the command.
  */
-  if(argc < 2) {
+  if(objc < 2) {
     Tcl_AppendResult(interp, "Missing arguments to ", widget, " command.",
 		     NULL);
     return TCL_ERROR;
   };
-  command = LangString(args[1]);
+  command = Tcl_GetString(objv[1]);
 #ifdef DODEBUG
   printf("  command=%s\n", command);
 #endif
@@ -1446,16 +1446,16 @@ static int tkpg_InstanceCommand(ClientData context, Tcl_Interp *interp,
   if(strcmp(command, "xview") == 0) {             /* X-axis scroll-bar update */
     return tkpg_InstanceCommand_return(context,
 		      tkpg_scrollbar_callback(tkpg, interp, widget, command,
-					      argc-2, args+2));
+					      objc-2, objv+2));
   } else if(strcmp(command, "yview") == 0) {      /* Y-axis scroll-bar update */
     return tkpg_InstanceCommand_return(context,
 		      tkpg_scrollbar_callback(tkpg, interp, widget, command,
-					      argc-2, args+2));
+					      objc-2, objv+2));
   } else if(strcmp(command, "configure") == 0) {  /* Configure widget */
 /*
  * Check the number of configure arguments.
  */
-    switch(argc - 2) {
+    switch(objc - 2) {
     case 0:   /* Return the values of all configuration options */
       return tkpg_InstanceCommand_return(context,
 			Tk_ConfigureInfo(interp, tkpg->tkwin, configSpecs,
@@ -1464,46 +1464,46 @@ static int tkpg_InstanceCommand(ClientData context, Tcl_Interp *interp,
     case 1:   /* Return the value of a single given configuration option */
       return tkpg_InstanceCommand_return(context,
 		        Tk_ConfigureInfo(interp, tkpg->tkwin, configSpecs,
-					 (char *) tkpg, LangString(args[2]), 0));
+					 (char *) tkpg, Tcl_GetString(objv[2]), 0));
       break;
     default:  /* Change one of more of the configuration options */
       return tkpg_InstanceCommand_return(context,
-			tkpg_Configure(tkpg, interp, argc-2, args+2,
+			tkpg_Configure(tkpg, interp, objc-2, objv+2,
 				       TK_CONFIG_ARGV_ONLY));
       break;
     };
   } else if(strcmp(command, "cget") == 0) {  /* Get a configuration value */
-    if(argc != 3) {
+    if(objc != 3) {
       Tcl_AppendResult(interp, "Wrong number of arguments to \"", widget,
 		       " cget\" command", NULL);
       return tkpg_InstanceCommand_return(context, TCL_ERROR);
     } else {
       return tkpg_InstanceCommand_return(context,
 			Tk_ConfigureValue(interp, tkpg->tkwin, configSpecs,
-					  (char *) tkpg, LangString(args[2]), 0));
+					  (char *) tkpg, Tcl_GetString(objv[2]), 0));
     };
   } else if(strcmp(command, "setcursor") == 0) { /* Augment the cursor */
     return tkpg_InstanceCommand_return(context,
-			tkpg_tcl_setcursor(tkpg, interp, argc - 2, args + 2));
+			tkpg_tcl_setcursor(tkpg, interp, objc - 2, objv + 2));
   } else if(strcmp(command, "clrcursor") == 0) { /* Clear cursor augmentation */
     tkpg_ClrCursor(tkpg);
     return tkpg_InstanceCommand_return(context, TCL_OK);
   } else if(strcmp(command, "world") == 0) {  /* Pixel to world coordinates */
     return tkpg_InstanceCommand_return(context,
 				       tkpg_tcl_world(tkpg, interp, widget,
-						      argc-2, args+2));
+						      objc-2, objv+2));
   } else if(strcmp(command, "pixel") == 0) {  /* World to pixel coordinates */
     return tkpg_InstanceCommand_return(context,
 				       tkpg_tcl_pixel(tkpg, interp, widget,
-						      argc-2, args+2));
+						      objc-2, objv+2));
   } else if(strcmp(command, "id") == 0) {     /* PGPLOT id of widget */
     return tkpg_InstanceCommand_return(context,
 				       tkpg_tcl_id(tkpg, interp, widget,
-						   argc-2, args+2));
+						   objc-2, objv+2));
   } else if(strcmp(command, "device") == 0) { /* PGPLOT name for the widget */
     return tkpg_InstanceCommand_return(context,
 				       tkpg_tcl_device(tkpg, interp, widget,
-						       argc-2, args+2));
+						       objc-2, objv+2));
   };
 /*
  * Unknown command name.
@@ -1537,8 +1537,8 @@ static int tkpg_InstanceCommand_return(ClientData context, int iret)
  * Input:
  *  tkpg        TkPgplot *  The widget record to be configured.
  *  interp    Tcl_Interp *  The TCL intrepreter.
- *  argc             int    The number of configuration arguments.
- *  argv            char ** The array of 'argc' configuration arguments.
+ *  objc             int    The number of configuration arguments.
+ *  objv            char ** The array of 'objc' configuration arguments.
  *  flags            int    The flags argument of Tk_ConfigureWidget():
  *                           0                - No flags.
  *                           TK_CONFIG_ARGV   - Override the X defaults
@@ -1549,7 +1549,7 @@ static int tkpg_InstanceCommand_return(ClientData context, int iret)
  *                          TCL_ERROR - Failure.
  */
 static int tkpg_Configure(TkPgplot *tkpg, Tcl_Interp *interp,
-			  int argc, Arg *args, int flags)
+			  int objc, Tcl_Obj *CONST objv[], int flags)
 {
 /*
  * Get the X-window pgplot object.
@@ -1562,14 +1562,14 @@ static int tkpg_Configure(TkPgplot *tkpg, Tcl_Interp *interp,
 
 #ifdef DODEBUG
   { int i;
-  for (i=0; i<argc; i++) {
-    printf(" %s", LangString(args[i]));
+  for (i=0; i<objc; i++) {
+    printf(" %s", Tcl_GetString(objv[i]));
   }
   printf("\n");
   }
 #endif
 
-  if(Tk_ConfigureWidget(interp, tkpg->tkwin, configSpecs, argc, args,
+  if(Tk_ConfigureWidget(interp, tkpg->tkwin, configSpecs, objc, objv,
 			(char *) tkpg, flags) == TCL_ERROR)
     return TCL_ERROR;
 /*
@@ -1867,8 +1867,8 @@ static void tkpg_ClrCursor(TkPgplot *tkpg)
  * Input:
  *  tkpg        TkPgplot *  The widget record to be configured.
  *  interp    Tcl_Interp *  The TCL intrepreter.
- *  argc             int    The number of configuration arguments.
- *  argv            char ** The array of 'argc' configuration arguments.
+ *  objc             int    The number of configuration arguments.
+ *  objv            char ** The array of 'objc' configuration arguments.
  *                           [0] The type of cursor augmentation, from:
  *                                norm  - Un-augmented X cursor
  *                                line  - Line cursor between ref and pointer
@@ -1893,7 +1893,7 @@ static void tkpg_ClrCursor(TkPgplot *tkpg)
  *                          TCL_ERROR - Failure.
  */
 static int tkpg_tcl_setcursor(TkPgplot *tkpg, Tcl_Interp *interp,
-			      int argc, Arg *args)
+			      int objc, Tcl_Obj *CONST objv[])
 {
   TkpgCursorMode mode;  /* Cursor augmentation mode */
   double xref,yref;    /* The X and Y reference positions of the cursor */
@@ -1920,7 +1920,7 @@ static int tkpg_tcl_setcursor(TkPgplot *tkpg, Tcl_Interp *interp,
 /*
  * Check that we have the expected number of arguments.
  */
-  if(argc != 4) {
+  if(objc != 4) {
     Tcl_AppendResult(interp, "Wrong number of arguments. Should be: \"",
 		     tkpg->name, " setcursor mode x y ci",
 		     //tkpg->pgx->name, " setcursor mode x y ci",
@@ -1940,7 +1940,7 @@ static int tkpg_tcl_setcursor(TkPgplot *tkpg, Tcl_Interp *interp,
  */
   mode = TKPG_NORM_CURSOR;
   for(i=0; !found && i<sizeof(modes)/sizeof(modes[0]); i++) {
-    if(strcmp(modes[i].name, LangString(args[0])) == 0) {
+    if(strcmp(modes[i].name, Tcl_GetString(objv[0])) == 0) {
       found = 1;
       mode = modes[i].mode;
     };
@@ -1949,7 +1949,7 @@ static int tkpg_tcl_setcursor(TkPgplot *tkpg, Tcl_Interp *interp,
  * Mode not found?
  */
   if(!found) {
-    Tcl_AppendResult(interp, "Unknown PGPLOT cursor mode \"", LangString(args[0]),
+    Tcl_AppendResult(interp, "Unknown PGPLOT cursor mode \"", Tcl_GetString(objv[0]),
 		     "\". Should be one of:", NULL);
     for(i=0; i<sizeof(modes)/sizeof(modes[0]); i++)
       Tcl_AppendResult(interp, " ", modes[i].name, NULL);
@@ -1958,13 +1958,13 @@ static int tkpg_tcl_setcursor(TkPgplot *tkpg, Tcl_Interp *interp,
 /*
  * Read the cursor X and Y coordinate.
  */
-  if(Tcl_GetDouble(interp, args[1], &xref) == TCL_ERROR ||
-     Tcl_GetDouble(interp, args[2], &yref) == TCL_ERROR)
+  if(Tcl_GetDouble(interp, Tcl_GetString(objv[1]), &xref) == TCL_ERROR ||
+     Tcl_GetDouble(interp, Tcl_GetString(objv[2]), &yref) == TCL_ERROR)
     return TCL_ERROR;
 /*
  * Get the color index to use when drawing the cursor.
  */
-  if(Tcl_GetInt(interp, args[3], &ci) == TCL_ERROR)
+  if(Tcl_GetInt(interp, Tcl_GetString(objv[3]), &ci) == TCL_ERROR)
     return TCL_ERROR;
 /*
  * Delegate the rest of the work to tkpg_SetCursor().
@@ -2034,7 +2034,7 @@ static void tkpg_update_border(TkPgplot *tkpg)
     tkpg->border = bd;
     tkpg_draw_3d_border(tkpg);
   } else {
-    fprintf(stderr, "Tk_Get3DBorder failed: %s\n", Tcl_GetResult(tkpg->interp));
+    fprintf(stderr, "Tk_Get3DBorder failed: %s\n", Tcl_GetString(Tcl_GetObjResult(tkpg->interp)));
   };
 }
 
@@ -2046,15 +2046,15 @@ static void tkpg_update_border(TkPgplot *tkpg)
  *  interp    Tcl_Interp *  The TCL intrepreter.
  *  widget          char *  The name of the PGPLOT widget.
  *  view            char *  "xview" or "yview".
- *  argc             int    The number of configuration arguments.
- *  argv            char ** The array of 'argc' configuration arguments.
+ *  objc             int    The number of configuration arguments.
+ *  objv            char ** The array of 'objc' configuration arguments.
  * Output:
  *  return           int    TCL_OK    - Success.
  *                          TCL_ERROR - Failure.
  */
 static int tkpg_scrollbar_callback(TkPgplot *tkpg, Tcl_Interp *interp, 
-				  char *widget, char *view, int argc,
-				  Arg  *args)
+				  char *widget, char *view, int objc,
+				  Tcl_Obj *CONST objv[])
 {
   int window_size;  /* The size of the window along the direction of motion */
   int pixmap_size;  /* The size of the pixmap along the direction of motion */
@@ -2076,53 +2076,53 @@ static int tkpg_scrollbar_callback(TkPgplot *tkpg, Tcl_Interp *interp,
  * The first argument specifies what form of scrollbar command has
  * been received (see 'man scrollbar' for details).
  */
-  if(argc < 1) {
-    return tkpg_scrollbar_error(tkpg, interp, widget, view, argc, args);
+  if(objc < 1) {
+    return tkpg_scrollbar_error(tkpg, interp, widget, view, objc, objv);
 /*
  * The moveto command requests a new start position as a
  * fraction of the pixmap size.
  */
-  } else if(strcmp(LangString(args[0]), "moveto")==0) {
+  } else if(strcmp(Tcl_GetString(objv[0]), "moveto")==0) {
     double fractional_position;
-    if(argc != 2)
-      return tkpg_scrollbar_error(tkpg, interp, widget, view, argc, args);
+    if(objc != 2)
+      return tkpg_scrollbar_error(tkpg, interp, widget, view, objc, objv);
 /*
  * Read the fractional position.
  */
-    if(Tcl_GetDouble(interp, args[1], &fractional_position) == TCL_ERROR)
+    if(Tcl_GetDouble(interp, Tcl_GetString(objv[1]), &fractional_position) == TCL_ERROR)
       return TCL_ERROR;
     new_start_pos = fractional_position * pixmap_size;
 /*
  * The "scroll" command specifies an increment to move the pixmap by
  * and the units to which the increment refers.
  */
-  } else if(strcmp(LangString(args[0]), "scroll")==0) {
+  } else if(strcmp(Tcl_GetString(objv[0]), "scroll")==0) {
     int scroll_increment;
-    if(argc != 3)
-      return tkpg_scrollbar_error(tkpg, interp, widget, view, argc, args);
+    if(objc != 3)
+      return tkpg_scrollbar_error(tkpg, interp, widget, view, objc, objv);
 /*
  * Read the scroll-increment.
  */
-    if(Tcl_GetInt(interp, args[1], &scroll_increment) == TCL_ERROR)
+    if(Tcl_GetInt(interp, Tcl_GetString(objv[1]), &scroll_increment) == TCL_ERROR)
       return TCL_ERROR;
 /*
  * The unit of the increment can either be "units", which in our case
  * translates to a single pixel, or "pages", which corresponds to the
  * width/height of the window.
  */
-    if(strcmp(LangString(args[2]), "units")==0) {
+    if(strcmp(Tcl_GetString(objv[2]), "units")==0) {
       new_start_pos = old_start_pos + scroll_increment;
-    } else if(strcmp(LangString(args[2]), "pages")==0) {
+    } else if(strcmp(Tcl_GetString(objv[2]), "pages")==0) {
       int page_size = window_size - 2 *
 	(tkpg->highlight_thickness + tkpg->borderWidth);
       if(page_size < 0)
 	page_size = 0;
       new_start_pos = old_start_pos + scroll_increment * page_size;
     } else {
-      return tkpg_scrollbar_error(tkpg, interp, widget, view, argc, args);
+      return tkpg_scrollbar_error(tkpg, interp, widget, view, objc, objv);
     };
   } else {
-    Tcl_AppendResult(interp, "Unknown xview command \"", LangString(args[0]), "\"", NULL);
+    Tcl_AppendResult(interp, "Unknown xview command \"", Tcl_GetString(objv[0]), "\"", NULL);
     return TCL_ERROR;
   };
 /*
@@ -2155,20 +2155,20 @@ static int tkpg_scrollbar_callback(TkPgplot *tkpg, Tcl_Interp *interp,
  *  interp    Tcl_Interp *  The TCL intrepreter.
  *  widget          char *  The name of the PGPLOT widget.
  *  view            char *  "xview" or "yview".
- *  argc             int    The number of arguments in argv.
- *  argv            char ** The array of 'argc' configuration arguments.
+ *  objc             int    The number of arguments in objv.
+ *  objv            char ** The array of 'objc' configuration arguments.
  * Output:
  *  return           int    TCL_ERROR and the context of the error
  *                          is recorded in interp->result.
  */
 static int tkpg_scrollbar_error(TkPgplot *tkpg, Tcl_Interp *interp, 
-			       char *widget, char *view, int argc,
-			       Arg *args)
+			       char *widget, char *view, int objc,
+			       Tcl_Obj *CONST objv[])
 {
   int i;
   Tcl_AppendResult(interp, "Bad command: ", widget, " ", view, NULL);
-  for(i=0; i<argc; i++)
-    Tcl_AppendResult(interp, " ", LangString(args[i]), NULL);
+  for(i=0; i<objc; i++)
+    Tcl_AppendResult(interp, " ", Tcl_GetString(objv[i]), NULL);
   Tcl_AppendResult(interp, "\nAfter \"widget [xy]view\", use one of:\n \"moveto <fraction>\" or \"scroll -1|1 units|pages\"", NULL);
   return TCL_ERROR;
 }
@@ -2182,8 +2182,8 @@ static int tkpg_scrollbar_error(TkPgplot *tkpg, Tcl_Interp *interp,
  *  tkpg        TkPgplot *  The widget record.
  *  interp    Tcl_Interp *  The TCL intrepreter.
  *  widget          char *  The name of the PGPLOT widget.
- *  argc             int    The number of configuration arguments.
- *  argv            char ** The array of 'argc' configuration arguments.
+ *  objc             int    The number of configuration arguments.
+ *  objv            char ** The array of 'objc' configuration arguments.
  *                           [0] The coordinate axes to convert, from:
  *                                "x"  - Convert an X-axis coord.
  *                                "y"  - Convert a Y-axis coord.
@@ -2200,7 +2200,7 @@ static int tkpg_scrollbar_error(TkPgplot *tkpg, Tcl_Interp *interp,
  *                          TCL_ERROR - Failure.
  */
 static int tkpg_tcl_world(TkPgplot *tkpg, Tcl_Interp *interp, 
-			 char *widget, int argc, Arg *args)
+			 char *widget, int objc, Tcl_Obj *CONST objv[])
 {
   int xpix, ypix;     /* The input X window coordinate */
   float rbuf[2];      /* The conversion buffer */
@@ -2211,30 +2211,30 @@ static int tkpg_tcl_world(TkPgplot *tkpg, Tcl_Interp *interp,
 /*
  * Check that an axis specification argument has been provided.
  */
-  if(argc < 1) {
+  if(objc < 1) {
     Tcl_AppendResult(interp, "Usage: ", widget, usage, NULL);
     return TCL_ERROR;
   };
 /*
  * Decode the axis type and check the expected argument count.
  */
-  axis = LangString(args[0]);
+  axis = Tcl_GetString(objv[0]);
   axtype = BAD_AXIS;
   switch(*axis++) {
   case 'x':
     switch(*axis++) {
     case 'y':
-      if(*axis == '\0' && argc == 3)
+      if(*axis == '\0' && objc == 3)
 	axtype = XY_AXIS;
       break;
     case '\0':
-      if(argc == 2)
+      if(objc == 2)
 	axtype = X_AXIS;
       break;
     };
     break;
   case 'y':
-    if(*axis == '\0' && argc == 2)
+    if(*axis == '\0' && objc == 2)
       axtype = Y_AXIS;
     break;
   };
@@ -2250,18 +2250,18 @@ static int tkpg_tcl_world(TkPgplot *tkpg, Tcl_Interp *interp,
  */
   switch(axtype) {
   case X_AXIS:
-    if(Tcl_GetInt(interp, args[1], &xpix) == TCL_ERROR)
+    if(Tcl_GetInt(interp, Tcl_GetString(objv[1]), &xpix) == TCL_ERROR)
       return TCL_ERROR;
     ypix = 0;
     break;
   case Y_AXIS:
     xpix = 0;
-    if(Tcl_GetInt(interp, args[1], &ypix) == TCL_ERROR)
+    if(Tcl_GetInt(interp, Tcl_GetString(objv[1]), &ypix) == TCL_ERROR)
       return TCL_ERROR;
     break;
   case XY_AXIS:
-    if(Tcl_GetInt(interp, args[1], &xpix) == TCL_ERROR ||
-       Tcl_GetInt(interp, args[2], &ypix) == TCL_ERROR)
+    if(Tcl_GetInt(interp, Tcl_GetString(objv[1]), &xpix) == TCL_ERROR ||
+       Tcl_GetInt(interp, Tcl_GetString(objv[2]), &ypix) == TCL_ERROR)
       return TCL_ERROR;
     break;
   };
@@ -2281,8 +2281,7 @@ static int tkpg_tcl_world(TkPgplot *tkpg, Tcl_Interp *interp,
     Tcl_DoubleResults(interp, 1, 0, rbuf[1]);
     break;
   case XY_AXIS:
-    Tcl_DoubleResults(interp, 1, 0, rbuf[0]);
-    Tcl_DoubleResults(interp, 1, 0, rbuf[1]);
+    Tcl_DoubleResults(interp, 2, 0, rbuf[0], rbuf[1]);
     break;
   };
   return TCL_OK;
@@ -2296,8 +2295,8 @@ static int tkpg_tcl_world(TkPgplot *tkpg, Tcl_Interp *interp,
  *  tkpg        TkPgplot *  The widget record.
  *  interp    Tcl_Interp *  The TCL intrepreter.
  *  widget          char *  The name of the PGPLOT widget.
- *  argc             int    The number of configuration arguments.
- *  argv            char ** The array of 'argc' configuration arguments.
+ *  objc             int    The number of configuration arguments.
+ *  objv            char ** The array of 'objc' configuration arguments.
  *                           [0] The coordinate axes to convert, from:
  *                                "x"  - Convert an X-axis coord.
  *                                "y"  - Convert a Y-axis coord.
@@ -2314,7 +2313,7 @@ static int tkpg_tcl_world(TkPgplot *tkpg, Tcl_Interp *interp,
  *                          TCL_ERROR - Failure.
  */
 static int tkpg_tcl_pixel(TkPgplot *tkpg, Tcl_Interp *interp, 
-			 char *widget, int argc, Arg *args)
+			 char *widget, int objc, Tcl_Obj *CONST objv[])
 {
   double wx, wy;      /* The world X and Y coordinates to be converted */
   int xpix, ypix;     /* The output X window coordinate */
@@ -2326,30 +2325,30 @@ static int tkpg_tcl_pixel(TkPgplot *tkpg, Tcl_Interp *interp,
 /*
  * Check that an axis specification argument has been provided.
  */
-  if(argc < 1) {
+  if(objc < 1) {
     Tcl_AppendResult(interp, "Usage: ", widget, usage, NULL);
     return TCL_ERROR;
   };
 /*
  * Decode the axis type and check the expected argument count.
  */
-  axis = LangString(args[0]);
+  axis = Tcl_GetString(objv[0]);
   axtype = BAD_AXIS;
   switch(*axis++) {
   case 'x':
     switch(*axis++) {
     case 'y':
-      if(*axis == '\0' && argc == 3)
+      if(*axis == '\0' && objc == 3)
 	axtype = XY_AXIS;
       break;
     case '\0':
-      if(argc == 2)
+      if(objc == 2)
 	axtype = X_AXIS;
       break;
     };
     break;
   case 'y':
-    if(*axis == '\0' && argc == 2)
+    if(*axis == '\0' && objc == 2)
       axtype = Y_AXIS;
     break;
   };
@@ -2365,18 +2364,18 @@ static int tkpg_tcl_pixel(TkPgplot *tkpg, Tcl_Interp *interp,
  */
   switch(axtype) {
   case X_AXIS:
-    if(Tcl_GetDouble(interp, args[1], &wx) == TCL_ERROR)
+    if(Tcl_GetDouble(interp, Tcl_GetString(objv[1]), &wx) == TCL_ERROR)
       return TCL_ERROR;
     wy = 0;
     break;
   case Y_AXIS:
     wx = 0;
-    if(Tcl_GetDouble(interp, args[1], &wy) == TCL_ERROR)
+    if(Tcl_GetDouble(interp, Tcl_GetString(objv[1]), &wy) == TCL_ERROR)
       return TCL_ERROR;
     break;
   case XY_AXIS:
-    if(Tcl_GetDouble(interp, args[1], &wx) == TCL_ERROR ||
-       Tcl_GetDouble(interp, args[2], &wy) == TCL_ERROR)
+    if(Tcl_GetDouble(interp, Tcl_GetString(objv[1]), &wx) == TCL_ERROR ||
+       Tcl_GetDouble(interp, Tcl_GetString(objv[2]), &wy) == TCL_ERROR)
       return TCL_ERROR;
     break;
   };
@@ -2392,16 +2391,17 @@ static int tkpg_tcl_pixel(TkPgplot *tkpg, Tcl_Interp *interp,
  */
   switch(axtype) {
   case X_AXIS:
-    sprintf(tkpg->buffer, "%d", xpix);
-    Tcl_AppendResult(interp, tkpg->buffer, NULL);
+    /* Note: Tcl_IntResults(interp, count, append, ...)  requires
+       append to be 1 when count is 1. See tkGlue.c in Perl/Tk code */
+    Tcl_IntResults(interp, 1, 1, xpix);
     break;
   case Y_AXIS:
-    sprintf(tkpg->buffer, "%d", ypix);
-    Tcl_AppendResult(interp, tkpg->buffer, NULL);
+    /* Note: Tcl_IntResults(interp, count, append, ...)  requires
+       append to be 1 when count is 1. See tkGlue.c in Perl/Tk code */
+    Tcl_IntResults(interp, 1, 1, ypix);
     break;
   case XY_AXIS:
-    sprintf(tkpg->buffer, "%d %d", xpix, ypix);
-    Tcl_AppendResult(interp, tkpg->buffer, NULL);
+    Tcl_IntResults(interp, 2, 0, xpix, ypix);
     break;
   };
   return TCL_OK;
@@ -2414,20 +2414,20 @@ static int tkpg_tcl_pixel(TkPgplot *tkpg, Tcl_Interp *interp,
  *  tkpg        TkPgplot *  The widget record.
  *  interp    Tcl_Interp *  The TCL intrepreter.
  *  widget          char *  The name of the PGPLOT widget.
- *  argc             int    The number of configuration arguments.
- *  argv            char ** The array of 'argc' configuration arguments.
+ *  objc             int    The number of configuration arguments.
+ *  objv            char ** The array of 'objc' configuration arguments.
  *                          (None are expected).
  * Output:
  *  return           int    TCL_OK    - Success.
  *                          TCL_ERROR - Failure.
  */
 static int tkpg_tcl_id(TkPgplot *tkpg, Tcl_Interp *interp, 
-		      char *widget, int argc, Arg *args)
+		      char *widget, int objc, Tcl_Obj *CONST objv[])
 {
 /*
  * There shouldn't be any arguments.
  */
-  if(argc != 0) {
+  if(objc != 0) {
     Tcl_AppendResult(interp, "Usage: ", widget, " id", NULL);
     return TCL_ERROR;
   };
@@ -2446,20 +2446,20 @@ static int tkpg_tcl_id(TkPgplot *tkpg, Tcl_Interp *interp,
  *  tkpg        TkPgplot *  The widget record.
  *  interp    Tcl_Interp *  The TCL intrepreter.
  *  widget          char *  The name of the PGPLOT widget.
- *  argc             int    The number of configuration arguments.
- *  argv            char ** The array of 'argc' configuration arguments.
+ *  objc             int    The number of configuration arguments.
+ *  objv            char ** The array of 'objc' configuration arguments.
  *                          (None are expected).
  * Output:
  *  return           int    TCL_OK    - Success.
  *                          TCL_ERROR - Failure.
  */
 static int tkpg_tcl_device(TkPgplot *tkpg, Tcl_Interp *interp, 
-			   char *widget, int argc, Arg *args)
+			   char *widget, int objc, Tcl_Obj *CONST objv[])
 {
 /*
  * There shouldn't be any arguments.
  */
-  if(argc != 0) {
+  if(objc != 0) {
     Tcl_AppendResult(interp, "Usage: ", widget, " device", NULL);
     return TCL_ERROR;
   };

@@ -1,13 +1,15 @@
-#Override these values if need be
+#Override these values via comman-line arguments (IDIR=... LDIR=... XDIR=...) if need be
 
-# Location of pgplot include files
-my $PGPLOT_INC_LOCATION = ""; # e.g. -I/usr/local/pgplot/include
+# IDIR = PGPLOT include file directory
+# LDIR = PGPLOT library file directory
+# XDIR = X11 library files directory
 
-# Location of pgplot directories. Defaults to $PGPLOT_DIR
-my $PGPLOT_LIB_LOCATION = ""; # e.g. -L/usr/local/pgplot/lib
+my %DefArg = (
+                IDIR => $ENV{PGPLOT_DIR} || '/usr/include,/usr/local/pgplot',
+	        LDIR => $ENV{PGPLOT_DIR} || '/usr/lib,/usr/local/pgplot',
+	        XDIR => '/usr/openwin/lib,/usr/X11R6/lib'
+             );
 
-# Location of X11 libraries
-my $X11_LIB_LOCATION = "-L/usr/openwin/lib -L/usr/X11R6/lib";
 
 #######################################################
 # There should be no need to edit the rest of this file
@@ -17,19 +19,26 @@ use Tk::MMutil;
 
 use ExtUtils::F77;
 
-if ($PGPLOT_LIB_LOCATION eq "" && defined $ENV{PGPLOT_DIR}) {
-  $PGPLOT_LIB_LOCATION =  "-L$ENV{PGPLOT_DIR}";
+while( $_ = shift @ARGV ) {
+  if ( /^([\S]+)=(.+)/ && exists $DefArg{$1} ) {
+    $DefArg{$1} = $2;
+  }
 }
-if ($PGPLOT_INC_LOCATION eq "" && defined $ENV{PGPLOT_DIR}) {
-  $PGPLOT_INC_LOCATION =  "-I$ENV{PGPLOT_DIR}";
-}
+
+my $LDIRS = join(' ', map {  "-L$_" }
+		   map { split( ',', $_ ) }
+		   @DefArg{qw/ XDIR LDIR /}
+		  );
+
+my $IDIRS = join( ' ', map { "-I$_" } split( ',', $DefArg{IDIR} ) );
+
 
 Tk::MMutil::TkExtMakefile(
     NAME         => 'Tk::Pgplot',
-    INC          => "$PGPLOT_INC_LOCATION",
-    LIBS         => "$PGPLOT_LIB_LOCATION $X11_LIB_LOCATION ".
+    INC          => $IDIRS,
+    LIBS         => ["$LDIRS ".
 			  "-lptkpgplot -lcpgplot -lpgplot -lX11 ".
-			  ExtUtils::F77->runtime,
+			  ExtUtils::F77->runtime],
     VERSION_FROM => 'Pgplot.pm',
     MYEXTLIB     => '',
     dist         => { COMPRESS => 'gzip -9f', SUFFIX => 'gz'},

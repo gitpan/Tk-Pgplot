@@ -8,7 +8,7 @@ Pgplot.xs
 test.pl
 demo.pl
 test.img
-PGPLOT.patch
+PGPLOT-patch
 patchit.pl
 pgplot.patch/drivers/ptk/ptkpgplot.c
 pgplot.patch/drivers/ptk/ptkpgplot.h
@@ -30,3 +30,4 @@ pgplot.patch/sys_linux/g77_gcc_aout.conf
 pgplot.patch/sys_linux/g77_gcc.conf
 pgplot.patch/sys_linux/nag_gcc.conf
 pgplot.patch/sys_linux/pgf77.conf
+META.yml                                 Module meta-data (added by MakeMaker)

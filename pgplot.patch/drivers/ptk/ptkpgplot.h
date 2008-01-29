@@ -5,8 +5,8 @@
 extern "C" {
 #endif
 
-  int PgplotCmd(ClientData context, Tcl_Interp *interp, int argc,
-	 	       Arg *args);
+  int PgplotCmd(ClientData context, Tcl_Interp *interp, int objc,
+	 	       Tcl_Obj *CONST objv[]);
 
 /*
  * Record the official PGPLOT device name of the widget driver.

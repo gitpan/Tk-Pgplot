@@ -26,7 +26,7 @@ void
 pgplot(...)
 CODE:
  {
-  XSRETURN(XSTkCommand(cv,PgplotCmd,items,&ST(0)));
+   TKXSRETURN(XSTkCommand(cv,0,PgplotCmd,items,&ST(0)));
  }
 
 PROTOTYPES: DISABLE

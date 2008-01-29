@@ -8,3 +8,9 @@
 		  Minor fixes to demo.pl
 31-Jan-2002 0.3   Updated for pgplot-5.2.2 (and Tk800.023). This includes
                   minor changes to the widget options and demo program
+01-Nov-2007 0.4   Updated for Tk804.027. The most significant changes
+                  were to ptkpgplot.c, to adapt it to the Tk changes. Also,
+                  minor changes to Pgplot.xs, Makefile.PL, and demo.pl. POD
+                  added to Pgplot.pm. Minor updates to other documentation.
+                  PGPLOT.patch file renamed to PGPLOT-patch to avoid a name
+                  conflict with pgplot.patch directory on Mac OSX.

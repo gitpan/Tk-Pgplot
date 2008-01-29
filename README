@@ -6,7 +6,7 @@ Tk::Pgplot
 Pgplot widget for Perl/Tk. This module is the perl front end to a port
 of the pgplot Tcl/Tk driver to Perl/Tk. It uses the same basic X code
 used by the Tcl/Tk and Motif drivers supplied with pgplot, and a
-modified version of the Tcl/Tk code. Due to this dependency of X code,
+modified version of the Tcl/Tk code. Due to this dependency on X code,
 it is unlikely to run on any OS that does not support X (ie Windows). 
 
 Requirements:
@@ -22,26 +22,21 @@ Platforms:
  This has been tested with
 
    - Linux
-	Redhat 7.0	gcc 2.96 perl-5.6.0 Tk800.022
-	SuSE   7.3	gcc 2.95 perl-5.6.1 Tk800.023
-
-   - Solaris	
-	5.6		egcs-2.91.66 perl-5.005_02 Tk800.022
-
-   - HP-UX   - Last tested with Tk-Pgplot 0.2
-	10.20		gcc perl-5.005_02 Tk800.022
+	CentOS 5	gcc 4.1.1 / perl 5.8.7 / Tk-804.027
 
 Installation:
 -------------
 
- - You *must* supply a patch to pgplot to include the perl/tk driver
+ - You *must* supply a patch to pgplot to include the Perl/Tk driver
    (see PGPLOT.patch).
 
- - Edit Makefile.PL and change the location of the pgplot libraries if need be.
-   By default it assumes the pgplot libraries and includes are pointed to 
-   by the environment variable PGPLOT_DIR. 
+ - Run 'perl Makefile.PL'. By default, Makefile.PL assumes the pgplot 
+   includes and libraries are pointed to by the environment variable
+   PGPLOT_DIR. You can override these defaults via command-line options,
+   as shown below. You can also override the X11 library directory, if
+   necessary.
 
-  > perl Makefile.PL
+  > perl Makefile.PL IDIR=<pgplot include file directory> LDIR=<pgplot library file directory>
   > make
   > make test
   > make install
@@ -51,13 +46,16 @@ Dependencies:
  
  - The Caltech pgplot library
  - The Perl PGPLOT Module (available from CPAN)
- - The ExtUtils::F77 Module from CPAN (also needed by the Pgplot module)
+ - The Perl Tk Module (available from CPAN)
+ - The ExtUtils::F77 Module from CPAN (also needed by the Perl PGPLOT module)
 
 
-Author:
+Authors:
 -------
- Please send comments and bug fixes to phillips@jive.nl
- Chris Phillips, Joint Institute for VLBI in Europe
+ Please send comments and bug fixes to r.kackley@jach.hawaii.edu
+ Russell Kackley, Joint Astronomy Centre, Hilo, HI
+
+ Chris Phillips was the original author of this module (Tk-Pgplot-0.30)
 
 Documentation:
 --------------
@@ -83,13 +81,9 @@ scripts for an example of usage.
 Bugs:
 -----
 
-- You cannot create a Pglot widget directly in the MainWindow. It needs to
+- You cannot create a Pgplot widget directly in the MainWindow. It needs to
   be created within a Frame.
-- make test fails (for me) on HP-UX. However perl test.pl works fine.
 - the scroll bars don't work on the test program (but they do on the demo)
-- On Solaris, I cannot work out how to autodetect if perl is present. As 
-  you wouldn't be installing this without perl I guess it is not very
-  important
 
 Copyright
 ---------
@@ -97,4 +91,8 @@ Copyright
 This module is copyright (C) 2000-2002 Chris Phillips.  All rights
 reserved.  This program is free software; you can redistribute it
 and/or modify it under the same terms as Perl itself.
+
+This module is copyright (C) 2007 Science and Technology Facilities
+Council.  All rights reserved.  This program is free software; you can
+redistribute it and/or modify it under the same terms as Perl itself.
 

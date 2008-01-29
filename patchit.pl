@@ -35,8 +35,10 @@ opendir($fh, 'pgplot.patch') || die "Cannot open 'pgplot.patch': $!\n";
 # CD to the patch dir to make life a little easier
 chdir './pgplot.patch' || die "Could not cd to pgplot.patch\n";
 
-# Suck up the files and directory structure of the patch directory
+# Suck up the files and directory structure of the patch
+# directory. Ignore hidden directories and CVS directory, if any.
 while (my $f = nextfile($fh, '')) {
+
     push @files, $f;
 }
 
@@ -52,7 +54,11 @@ patchdir('', @files);
 
 sub nextfile ($$) {
     my ($fh, $currentdir) = @_;
-    my $f = readdir $fh;
+    my $f;
+    while ($f = readdir $fh) {
+      # Ignore hidden directories and CVS directory.
+      last unless ($f =~ /^\.|CVS/);
+    }
 
     return undef if (!defined $f);
 

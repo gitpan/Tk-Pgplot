@@ -118,7 +118,7 @@ my $help_dialog = create_help_dialog($mw);
 # underneath it.
 $world->pack(-side => 'top',  -anchor => 'w');
 $imagearea->pack(-side => 'top', -fill => 'both', -expand => 1);
-$function->pack(side => 'top',  -fill => 'x');
+$function->pack(-side => 'top',  -fill => 'x');
 $slicearea->pack(-side => 'top', -fill => 'both', -expand => 1);
 
 # Windows in Tk do not take on their final sizes until the whole
@@ -591,7 +591,7 @@ sub start_slice ($$$%) {
   $y = $pgimage->world('y', $y);
   $pgimage->setcursor('line', $x, $y, 3);
   $pgimage->bind('<ButtonPress>'
-		 => [\&end_slice, $x, $y,
+		 => [\&end_slice, $x->[0], $y->[0],
 		     Ev('x'), Ev('y'),
 		     $demodata]);
 }

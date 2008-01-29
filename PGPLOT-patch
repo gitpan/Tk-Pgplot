@@ -35,24 +35,23 @@ out the correct value for this, but is is probably worth verifying the
 Makefile if you have compilation troubles. Set the value by hand if
 the correct value is not found.
 
-Currently this has been tested under Linux, Solaris and HP-UX. To get
-this to work for other OSes, copy the section from one of the included 
-.conf files the .conf file for your OS/compile combination.
+Currently this has been tested under Linux. To get this to work for
+other OSes, copy the section from one of the included .conf files the
+.conf file for your OS/compile combination.
 
 You must compile the C wrappers to pgplot to get it to work from
-perl. The Tcl/Tk code inserts a dummy driver into the normal libpgplot
-so that applications not using the perl/tk driver do not have to link
-with perl. When the perl/tk driver is wanted the dynamic linker should
+Perl. The Tcl/Tk code inserts a dummy driver into the normal libpgplot
+so that applications not using the Perl/Tk driver do not have to link
+with Perl. When the Perl/Tk driver is wanted the dynamic linker should
 load the correct objects.
 
 ***NOTE***
 
 Getting the PTK driver to work is a delicate business. Make sure you:
- - Install Tk
+ - Install the Perl/Tk module
  - Install the source code for Tk::Pgplot and patch pgplot
  - Enable PTK driver in pgplot drivers.list
  - Recompile (and re-install) pgplot (make sure libptkpgplot.a is present)
- - Install (*or re-install*) pgperl. If you use a version of pgperl compiled
-   before you patched pgplot, it will not work
- - compile and install Tk::Pgplot (note you should only run perl Makefile.PL
+ - Install the Perl PGPLOT module
+ - Compile and install Tk::Pgplot (note you should only run perl Makefile.PL
    at this stage).
